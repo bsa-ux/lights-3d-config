@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>STRIPE Layout Builder</title>
+<title>Modular Layout Builder</title>
 
 <style>
-/* Layout: one-screen engineering console. Header → controls+stats strip → canvas | BOM → legend strip. Dark-first (control-room), Liteline blue as the single accent. */
+/* Layout: one-screen engineering console. Header → controls+stats strip → canvas | BOM → legend strip. Dark-first (control-room), one blue accent. */
 :root {
   --bg: #0e1522; --panel: #141c2b; --panel-2: #1a2334; --line: #263146; --line-2: #33405a;
   --fg: #e8edf5; --muted: #8b97ad; --faint: #5b6782;
@@ -180,7 +180,7 @@ kbd { font: 11px var(--mono); border: 1px solid var(--line-2); border-radius: 4p
 <body>
 
 <header class="hdr gutter">
-  <h1>STRIPE Layout Builder</h1>
+  <h1>Modular Layout Builder</h1>
   <span class="tag">Codup prototype · v0.9</span>
   <span class="sp"></span>
   <button class="btn small" id="themeBtn" type="button">Light</button>
@@ -265,7 +265,7 @@ kbd { font: 11px var(--mono); border: 1px solid var(--line-2); border-radius: 4p
   <div class="box">
     <button class="btn small close" type="button" data-close>Close</button>
     <h2 id="helpTitle">How the builder works</h2>
-    <p>Click a <b>+</b> to add a cell next to the layout and <b>−</b> in a cell to remove it. Every edge of a cell is one STRIPE fixture; every corner is one connector. Shared edges count once, so a honeycomb of 19 hexagons needs 74 fixtures, not 114.</p>
+    <p>Click a <b>+</b> to add a cell next to the layout and <b>−</b> in a cell to remove it. Every edge of a cell is one light-bar fixture; every corner is one connector. Shared edges count once, so a honeycomb of 19 hexagons needs 74 fixtures, not 114.</p>
     <h3>Connectors</h3>
     <ul>
       <li><b>2-way</b> where two fixtures meet at a corner (120° on hexagons, 90° on squares, 135° on octagons).</li>
@@ -314,8 +314,8 @@ kbd { font: 11px var(--mono); border: 1px solid var(--line-2); border-radius: 4p
 
 </script>
 <script>
-/* STRIPE Layout Engine — pure functions, no DOM.
-   Cells live on a lattice; every polygon edge is one STRIPE fixture; every
+/* Modular Light Bar Layout Engine — pure functions, no DOM.
+   Cells live on a lattice; every polygon edge is one light-bar fixture; every
    lattice vertex is one connector. Everything else (circuits, polarity,
    separators, inserts, BOM) is derived from that graph. */
 (function (root) {
@@ -323,7 +323,7 @@ kbd { font: 11px var(--mono); border: 1px solid var(--line-2); border-radius: 4p
 
   const SQ3 = Math.sqrt(3);
 
-  // Provisional electrical data. 36" values are read off the live Liteline
+  // Provisional electrical data. 36" values are read off the reference
   // builder (74 fixtures → 84,508 lm / 1110 W). Others scale by length.
   const SIZES = {
     18: { in: 18, watts: 7.5, lumens: 571 },
@@ -594,18 +594,18 @@ kbd { font: 11px var(--mono); border: 1px solid var(--line-2); border-radius: 4p
     const finish = cfg.finish === 'white' ? { code: 'WH', label: 'White' } : { code: 'BK', label: 'Black' };
     const bom = [];
     const push = (section, item, desc, qty, note, dot) => bom.push({ section, item, desc, qty, note, dot });
-    push('Fixtures', `STRIPE${spec.in}-5CCT-${finish.code}`, `STRIPE ${spec.in}" 5CCT, ${finish.label}`, fixtures);
+    push('Fixtures', `BAR${spec.in}-5CCT-${finish.code}`, `Light bar ${spec.in}" 5CCT, ${finish.label}`, fixtures);
     const shape = g.shape;
-    if (connectors.endcap) push('Connectors', 'STRIPE-ENDCAP', 'End cap', connectors.endcap, null, 'endcap');
-    if (connectors['2way']) push('Connectors', 'STRIPE-CONN-2W', `2-way ${shape.angle2}° connector body`, connectors['2way'], 'prov', '2way');
-    if (connectors['3way']) push('Connectors', 'STRIPE-CONN-3W', `3-way ${cfg.shape === 'square' ? 'T' : 'Y'} connector body`, connectors['3way'], 'prov', '3way');
-    if (connectors['4way']) push('Connectors', 'STRIPE-CONN-4W', '4-way X connector body', connectors['4way'], 'prov', '4way');
+    if (connectors.endcap) push('Connectors', 'BAR-ENDCAP', 'End cap', connectors.endcap, null, 'endcap');
+    if (connectors['2way']) push('Connectors', 'BAR-CONN-2W', `2-way ${shape.angle2}° connector body`, connectors['2way'], 'prov', '2way');
+    if (connectors['3way']) push('Connectors', 'BAR-CONN-3W', `3-way ${cfg.shape === 'square' ? 'T' : 'Y'} connector body`, connectors['3way'], 'prov', '3way');
+    if (connectors['4way']) push('Connectors', 'BAR-CONN-4W', '4-way X connector body', connectors['4way'], 'prov', '4way');
     Object.keys(separators).forEach(k => { if (separators[k]) push('Circuit separation', '—', `${k.replace('way', '-way')} circuit separator — isolates one leg (1 per circuit boundary)`, separators[k], null, k); });
-    push('Power feeds', 'STRIPE-FEED', 'Power feed / driver input (1 per circuit)', circuits.length, 'prov');
+    push('Power feeds', 'BAR-FEED', 'Power feed / driver input (1 per circuit)', circuits.length, 'prov');
     const insertLabel = { '2way:MF': '2-way M-F insert', '3way:MFF': '3-way MFF insert', '3way:MMF': '3-way MMF insert', '4way:MMFF': '4-way MMFF insert', '4way:MMMF': '4-way MMMF insert', '4way:MFFF': '4-way MFFF insert' };
     Object.keys(inserts).sort().forEach(k => { if (!k.startsWith('endcap')) push('Inserts — item # TBD', '—', insertLabel[k] || k, inserts[k], null, k.split(':')[0]); });
-    if (cfg.mounting === 'suspended') push('Mounting', 'STRIPE-SUSPKIT', `Suspension kit (${SUSP_PER_FIXTURE} per fixture)`, fixtures * SUSP_PER_FIXTURE, 'prov');
-    else push('Mounting', 'STRIPE-SURMCLIP', `Surface mount clip (${CLIPS_PER_FIXTURE} per fixture)`, fixtures * CLIPS_PER_FIXTURE, 'prov');
+    if (cfg.mounting === 'suspended') push('Mounting', 'BAR-SUSPKIT', `Suspension kit (${SUSP_PER_FIXTURE} per fixture)`, fixtures * SUSP_PER_FIXTURE, 'prov');
+    else push('Mounting', 'BAR-SURMCLIP', `Surface mount clip (${CLIPS_PER_FIXTURE} per fixture)`, fixtures * CLIPS_PER_FIXTURE, 'prov');
 
     return {
       g, spec, p, bounds: b, fixtures, cells: g.cells.length,
@@ -622,7 +622,7 @@ kbd { font: 11px var(--mono); border: 1px solid var(--line-2); border-radius: 4p
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
 <script>
-/* STRIPE 3D view — three.js (r128 UMD). Builds fixtures, connectors, room
+/* Modular light bar 3D view — three.js (r128 UMD). Builds fixtures, connectors, room
    surfaces and a simple orbit camera from the same engine result the 2D
    canvas uses. Editing stays in 2D; this is the visualiser. */
 (function (root) {
@@ -806,7 +806,7 @@ kbd { font: 11px var(--mono); border: 1px solid var(--line-2); border-radius: 4p
   const $ = s => document.querySelector(s);
   const svg = $('#svg');
   const R_NODE = 2.4, BAR_W = 2.6, PAD = 34;
-  const KEY = 'stripe-builder-v1';
+  const KEY = 'modular-layout-builder-v1';
 
   const LAYER_DEFAULTS = { cellguide: false, bars: true, traces: true, pins: true, mfbars: true, mfnodes: true, endcap: true, '2way': true, '3way': true, '4way': true, circuits: true, feeds: true, seps: true, dims: true, edit: true };
 
@@ -876,7 +876,7 @@ kbd { font: 11px var(--mono); border: 1px solid var(--line-2); border-radius: 4p
       const ux = dx / len, uy = dy / len, nx = -uy, ny = ux;
       const x1 = a.x + ux * R_NODE, y1 = a.y + uy * R_NODE, x2 = b.x - ux * R_NODE, y2 = b.y - uy * R_NODE;
       const colour = circuitsOn && result.circuits[e.circuit] ? result.circuits[e.circuit].colour : 'var(--bar)';
-      const title = `STRIPE ${result.spec.in}" fixture · circuit C${e.circuit + 1} · ${result.spec.watts} W · ${result.spec.lumens} lm`;
+      const title = `Light bar ${result.spec.in}" fixture · circuit C${e.circuit + 1} · ${result.spec.watts} W · ${result.spec.lumens} lm`;
       if (L.bars) out.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${colour}" stroke-width="${BAR_W}" stroke-linecap="round" opacity="${circuitsOn ? .9 : 1}"><title>${esc(title)}</title></line>`);
       if (L.traces) {
         const o = 0.7, tx1 = x1 + ux * 1.2, ty1 = y1 + uy * 1.2, tx2 = x2 - ux * 1.2, ty2 = y2 - uy * 1.2;
@@ -1140,7 +1140,7 @@ kbd { font: 11px var(--mono); border: 1px solid var(--line-2); border-radius: 4p
     return `<h3>Fixture data (provisional)</h3><table style="width:100%;border-collapse:collapse;font:12px var(--mono)"><tr style="color:var(--muted)"><td>Size</td><td>Load</td><td>Output</td><td>Pitch</td></tr>${sizes}</table>` +
       `<h3>Constants</h3><ul><li>Max load per power feed / driver: <b>${E.MAX_CIRCUIT_W} W</b></li><li>Connector body between fixture ends: <b>${E.CONNECTOR_GAP_IN}"</b></li><li>Surface mount clips: 3 per fixture · Suspension kits: 2 per fixture</li></ul>` +
       `<h3>Derivation</h3><ul><li>Fixtures = unique cell edges. Connectors = unique cell corners.</li><li>Connector body = number of fixtures meeting at the corner (2, 3 or 4). Separator bodies replace a normal body where circuits meet.</li><li>Insert pattern = genders of the fixture ends arriving at the corner, after automatic orientation.</li><li>Circuits = connected top-to-bottom bands of ≤ ${E.MAX_CIRCUIT_W} W, boundaries nudged onto 3-way junctions.</li></ul>` +
-      `<p style="color:var(--muted)">36" values reproduce the live Liteline builder (74 fixtures → 84,508 lm, 1,110 W). Other sizes are scaled by length pending catalogue data.</p>`;
+      `<p style="color:var(--muted)">36" values reproduce the reference builder output (74 fixtures → 84,508 lm, 1,110 W). Other sizes are scaled by length pending catalogue data.</p>`;
   }
 
   // BOM CSV
@@ -1159,7 +1159,7 @@ kbd { font: 11px var(--mono); border: 1px solid var(--line-2); border-radius: 4p
     const r = result, b = r.bounds, name = $('#rfqProject').value.trim() || 'Untitled layout';
     const pad = (s, n) => String(s).padEnd(n);
     const lines = [
-      `REQUEST FOR QUOTE — STRIPE ${r.g.shape.label} layout`, `Project: ${name}`, `Date: ${new Date().toISOString().slice(0, 10)}`, '',
+      `REQUEST FOR QUOTE — Modular light bar ${r.g.shape.label} layout`, `Project: ${name}`, `Date: ${new Date().toISOString().slice(0, 10)}`, '',
       `Configuration: ${r.cells} ${r.g.shape.plural.toLowerCase()} · ${r.spec.in}" fixtures · ${state.finish} · ${state.mounting} mount`,
       `Overall size: ${f1(b.w)} × ${f1(b.h)} in (${mm(b.w)} × ${mm(b.h)} mm)`,
       `Output: ${r.lumens.toLocaleString()} lm · Load: ${r.watts.toLocaleString()} W · ${r.circuits.length} circuit(s) ≤ ${E.MAX_CIRCUIT_W} W: ${r.circuits.map(c => `C${c.index + 1} ${c.watts} W`).join(', ')}`, '',
